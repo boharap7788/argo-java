@@ -9,6 +9,6 @@ spec:
     app: user-service
   ports:
     - name: http
-      port: 80
-      targetPort: http
+      port: 8080
+      targetPort: 8080
   type: ClusterIP

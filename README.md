@@ -1,16 +1,16 @@
 # Argo CD Java Labs
 
-A small Spring Boot backend used to learn three ways to manage multiple services with Argo CD. The Java application responds on `/api/hello`; the separate user and order images return different messages so they are easy to identify.
+A small Spring Boot backend used to learn three ways to manage multiple services with Argo CD. The separate user and order images expose `/api/users` and `/api/orders`; the order endpoint calls the user service through Kubernetes DNS.
 
 ## One-time setup
 
 Requirements: Docker, kind, kubectl, Java 17, and Maven.
 
-Create a kind cluster and install Argo CD with the official manifest:
+Create the kind cluster from [cluster/kind-cluster.yaml](cluster/kind-cluster.yaml), then install Argo CD with the official manifest:
 
 ```bash
-kind create cluster --name argo-lab
-kubectl create namespace argocd
+kind create cluster --config cluster/kind-cluster.yaml
+kubectl apply -f argocd/namespace.yaml
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 kubectl wait --for=condition=Available deployment/argocd-server -n argocd --timeout=180s
 ```
@@ -25,7 +25,7 @@ kind load docker-image argo-java:user-service --name argo-lab
 kind load docker-image argo-java:order-service --name argo-lab
 ```
 
-Push this repository to a Git remote before running a lab. Replace `YOUR_USERNAME` with the repository owner in every `repoURL` in [argocd/apps/user-service.yaml](argocd/apps/user-service.yaml), [argocd/apps/order-service.yaml](argocd/apps/order-service.yaml), [argocd/root-app.yaml](argocd/root-app.yaml), and [argocd/applicationset.yaml](argocd/applicationset.yaml).
+Push this repository to the configured Git remote before running a lab. The Argo CD manifests point to `https://github.com/boharap7788/argo-java.git`; change that value in the four Argo CD YAML files if you fork the repository.
 
 The Argo CD UI is available locally with:
 
@@ -52,6 +52,10 @@ Check the services:
 kubectl get applications -n argocd
 kubectl get pods -n user-service
 kubectl get pods -n order-service
+kubectl port-forward svc/user-service -n user-service 8081:8080
+curl http://localhost:8081/api/users
+kubectl port-forward svc/order-service -n order-service 8082:8080
+curl http://localhost:8082/api/orders
 ```
 
 Teardown before the next lab:
